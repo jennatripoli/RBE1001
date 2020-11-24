@@ -3,8 +3,9 @@
 
 Motor left, right;
 Rangefinder rangefinder;
-Servo armServo;
+Servo armServo, armServoFeed;
 ESP32AnalogRead leftLine, rightLine;
+
 
 const float kP = 0.04; // this was tuned on carpet
 const float wheelDiameter = 7; // in cm
@@ -17,7 +18,9 @@ void setup() {
     left.attach(MOTOR_LEFT_PWM, MOTOR_LEFT_DIR, MOTOR_LEFT_ENCA, MOTOR_LEFT_ENCB);
     right.attach(MOTOR_RIGHT_PWM, MOTOR_RIGHT_DIR, MOTOR_RIGHT_ENCA, MOTOR_RIGHT_ENCB);
     rangefinder.attach(SIDE_ULTRASONIC_TRIG, SIDE_ULTRASONIC_ECHO);
+    ESP32PWM::allocateTimer(1);
     armServo.attach(33);
+    armServoFeed.attach(34);
     leftLine.attach(36);
     rightLine.attach(39);
 }
@@ -52,6 +55,20 @@ void driveToObject(float distanceFromObject) {
     right.setEffort(error * kP);
 }
 
+void servootest()
+{
+    
+    armServo.write(0);
+    delay(4000);
+    armServo.write(70);
+    delay(4000);
+    armServo.write(180);
+    delay(4000);
+}
+
 void loop() {
     
+    Serial.print(armServoFeed.attached());
+    servootest();
+    delay(500);
 }
