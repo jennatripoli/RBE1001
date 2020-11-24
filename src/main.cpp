@@ -3,8 +3,8 @@
 
 Motor left, right;
 Rangefinder rangefinder;
-Servo armServo;
-ESP32AnalogRead leftLine, rightLine;
+//Servo armServo;
+//ESP32AnalogRead leftLine, rightLine;
 
 const float kP = 0.04; // this was tuned on carpet
 const float wheelDiameter = 7; // in cm
@@ -17,9 +17,9 @@ void setup() {
     left.attach(MOTOR_LEFT_PWM, MOTOR_LEFT_DIR, MOTOR_LEFT_ENCA, MOTOR_LEFT_ENCB);
     right.attach(MOTOR_RIGHT_PWM, MOTOR_RIGHT_DIR, MOTOR_RIGHT_ENCA, MOTOR_RIGHT_ENCB);
     rangefinder.attach(SIDE_ULTRASONIC_TRIG, SIDE_ULTRASONIC_ECHO);
-    armServo.attach(33);
-    leftLine.attach(36);
-    rightLine.attach(39);
+    //armServo.attach(33);
+    //leftLine.attach(36);
+    //rightLine.attach(39);
 }
 
 /**
@@ -59,22 +59,23 @@ void driveToObject(float distanceFromObject) {
 void turnToObject(float distanceFromObject) {
     if (rangefinder.getDistanceCM() > distanceFromObject) {
         while(rangefinder.getDistanceCM() > distanceFromObject) {
-            left.setEffort(0.3);
-            right.setEffort(-0.3);
+            left.setEffort(-0.15);
+            right.setEffort(0.15);
         }
         float bagStart = left.getCurrentDegrees();
         while(rangefinder.getDistanceCM() < distanceFromObject) {
-            left.setEffort(0.3);
-            right.setEffort(-0.3);
+            left.setEffort(-0.15);
+            right.setEffort(0.15);
         }
         left.setEffort(0);
         right.setEffort(0);
         float bagEnd = left.getCurrentDegrees();
-        float bagCenter = (bagStart - bagEnd) / 4;
+        float bagCenter = (bagStart - bagEnd) / 3;
         turn(bagCenter);
     }
 }
 
 void loop() {
-    
+    turnToObject(100);
+    driveToObject(5.08);
 }
