@@ -44,12 +44,35 @@ void turn(float degrees) {
 
 /**
  * Drive with proportional control to target distance and stop.
- * @param distanceFromObject target distance away from object
+ * @param distanceFromObject target distance away from object, in cm
  **/
 void driveToObject(float distanceFromObject) {
     float error = rangefinder.getDistanceCM() - distanceFromObject;
     left.setEffort(error * kP);
     right.setEffort(error * kP);
+}
+
+/**
+ * Find both edges of the bag and turn to the center of the bag.
+ * @param distanceFromObject max distance away from object, in cm
+ **/
+void turnToObject(float distanceFromObject) {
+    if (rangefinder.getDistanceCM() > distanceFromObject) {
+        while(rangefinder.getDistanceCM() > distanceFromObject) {
+            left.setEffort(0.3);
+            right.setEffort(-0.3);
+        }
+        float bagStart = left.getCurrentDegrees();
+        while(rangefinder.getDistanceCM() < distanceFromObject) {
+            left.setEffort(0.3);
+            right.setEffort(-0.3);
+        }
+        left.setEffort(0);
+        right.setEffort(0);
+        float bagEnd = left.getCurrentDegrees();
+        float bagCenter = (bagStart - bagEnd) / 4;
+        turn(bagCenter);
+    }
 }
 
 void loop() {
