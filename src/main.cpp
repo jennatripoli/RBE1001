@@ -53,11 +53,20 @@ void driveToObject(float distanceFromObject) {
 }
 
 /**
- * Find both edges of the bag and turn to the center of the bag.
+ * Find both edges of an object and turn to the center of the bag.
  * @param distanceFromObject max distance away from object, in cm
  **/
 void turnToObject(float distanceFromObject) {
-    if (rangefinder.getDistanceCM() > distanceFromObject) {
+    while (rangefinder.getDistanceCM() > distanceFromObject) { // while object is out of range
+        left.setEffort(0.1);
+        right.setEffort(-0.1);
+    }
+    float leftEdge = right.getCurrentDegrees(), rightEdge = leftEdge; // default for rightEdge causes no turning
+    delay(10); // to ensure the rangefinder changes values between the while and if
+    if (rangefinder.getDistanceCM() > distanceFromObject) rightEdge = right.getCurrentDegrees(); // when object is out of range
+    turn((leftEdge - rightEdge) / 2); // turn ccw to center of object (average between the two edges)
+
+    /*if (rangefinder.getDistanceCM() > distanceFromObject) {
         while (rangefinder.getDistanceCM() > distanceFromObject) {
             left.setEffort(0.1);
             right.setEffort(-0.1);
@@ -72,11 +81,9 @@ void turnToObject(float distanceFromObject) {
         float bagEnd = left.getCurrentDegrees();
         float bagCenter = (bagStart - bagEnd) / 2;
         turn(bagCenter);
-    }
+    }*/
 }
 
 void loop() {
     turnToObject(100);
-    //driveToObject(5.08);
-    //turn(180);
 }
