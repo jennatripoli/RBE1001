@@ -37,7 +37,7 @@ void forward(float cm) {
  * @param degrees target change in angle, in degrees (positive = clockwise)
  **/
 void turn(float degrees) {
-    float paramDegrees = ((degrees) / 360) * (wheelCircumference)*degreesPerCm * 2;
+    float paramDegrees = ((degrees) / 360) * (wheelCircumference) * degreesPerCm * 2;
     left.startMoveFor(paramDegrees, 90);
     right.moveFor(-1 * paramDegrees, 90);
 }
@@ -58,13 +58,13 @@ void driveToObject(float distanceFromObject) {
  **/
 void turnToObject(float distanceFromObject) {
     while (rangefinder.getDistanceCM() > distanceFromObject) { // while object is out of range
-        left.setEffort(0.1);
-        right.setEffort(-0.1);
+        left.setEffort(0.2);
+        right.setEffort(-0.2);
     }
     float leftEdge = right.getCurrentDegrees(), rightEdge = leftEdge; // default for rightEdge causes no turning
-    delay(10); // to ensure the rangefinder changes values between the while and if
+    while (rangefinder.getDistanceCM() < distanceFromObject) {} // wait for the object to get out of range
     if (rangefinder.getDistanceCM() > distanceFromObject) rightEdge = right.getCurrentDegrees(); // when object is out of range
-    turn((leftEdge - rightEdge) / 2); // turn ccw to center of object (average between the two edges)
+    turn((rightEdge - leftEdge) / 2); // turn ccw to center of object (average between the two edges)
 
     /*if (rangefinder.getDistanceCM() > distanceFromObject) {
         while (rangefinder.getDistanceCM() > distanceFromObject) {
