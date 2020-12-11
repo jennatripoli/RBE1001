@@ -42,7 +42,7 @@ int deliverC = 135; // bag 3
 //state machine
 enum ROBOT_STATES{LINE_FOLLOW_OUT, APPROACH_BAG, STREET_1, STREET_2, STREET_3, STREET_4, STREET_5, LINE_FOLLOW_CRUTCH, end};
 int robotState;
-int bagState = 1; // 0 = STREET_3, 1 = STREET_4, 2 = STREET_5
+int bagState = 0; // 0 = STREET_3, 1 = STREET_4, 2 = STREET_5
 
 //functions
 void lineFollow(int reflectance1, int reflectance2);
@@ -182,10 +182,8 @@ void updateRobotState(void){
 
   case LINE_FOLLOW_OUT:  // Robot goes down STREET_2 heading towards the Bag Pick Up area
         if ((reflectance1 >= threshold) && (reflectance2 >= threshold)){ //when it sees pick up zone
-          delay(100);
           atStopPointLeft = left_motor.getCurrentDegrees(); //save position for free-range finding
           atStopPointRight = right_motor.getCurrentDegrees();
-          delay(100);
           softTurn(-85);
           robotState = APPROACH_BAG;
         } else {
@@ -202,7 +200,8 @@ void updateRobotState(void){
            straight(2);
            robotState = STREET_3;
           } else if (bagState == 3){
-           straight (10);
+           left_motor.setSpeed(0);
+           right_motor.setSpeed(0);
            robotState = end;
           }
         }else{
@@ -264,7 +263,6 @@ void updateRobotState(void){
           hardTurn(-45);
           robotState = STREET_2;
          } else {
-          delay(100);
           dropOffBag();
           robotState = LINE_FOLLOW_CRUTCH;
          }
