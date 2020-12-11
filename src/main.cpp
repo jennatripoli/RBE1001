@@ -40,7 +40,7 @@ int deliverB = 90;
 int deliverC = 135;
 
 //state machine
-enum ROBOT_STATES{LINE_FOLLOW_OUT, APPROACH_BAG, STREET_1, STREET_2A,STREET_2B, STREET_3, STREET_4, STREET_5, LINE_FOLLOW_CRUTCH};
+enum ROBOT_STATES{LINE_FOLLOW_OUT, APPROACH_BAG, STREET_1, STREET_2, STREET_3, STREET_4, STREET_5, LINE_FOLLOW_CRUTCH, end};
 int robotState;
 int bagState = 0; // 0 = STREET_3, 1 = STREET_4, 2 = STREET_5
 
@@ -170,7 +170,7 @@ void dropOffBag(){
   } else if (bagState == 3){
     lifter.write(deliverC);
   }
-  delay(1000);
+  delay(500);
 }
 
 void pickupBag(){
@@ -186,7 +186,7 @@ void updateRobotState(void){
 
   case LINE_FOLLOW_OUT:     
         if ((reflectance1 >= threshold) && (reflectance2 >= threshold)){ //when it sees pick up zone
-          delay(200);
+          delay(100);
           atStopPointLeft = left_motor.getCurrentDegrees(); //save position for free-range finding
           atStopPointRight = right_motor.getCurrentDegrees();
           delay(100);
@@ -207,6 +207,7 @@ void updateRobotState(void){
            robotState = LINE_FOLLOW_OUT;
           } else if (bagState == 3){
            straight (10, diam);
+           robotState = end;
           }
         }else{
            lineFollow(reflectance1, reflectance2);
@@ -229,13 +230,13 @@ void updateRobotState(void){
          right_motor.setSpeed(0);
          delay(100);
          softTurn(85, diam, track);
-         robotState = STREET_2A;
+         robotState = STREET_2;
        }else{
          lineFollow(reflectance1, reflectance2);
        }
       break;
 
-  case STREET_2A:    // from the quad
+  case STREET_2:    // from the quad
       if ((reflectance1 > threshold) && (reflectance2 > threshold)){
          left_motor.setSpeed(0);
          right_motor.setSpeed(0);
@@ -251,18 +252,6 @@ void updateRobotState(void){
            straight(2, diam);
            robotState = STREET_5;
          }   
-       }else{
-         lineFollow(reflectance1, reflectance2);
-       }
-      break;
-
-  case STREET_2B:    //to the quad
-      if ((reflectance1 > threshold) && (reflectance2 > threshold)){
-         left_motor.setSpeed(0);
-         right_motor.setSpeed(0);
-         delay(100);
-         softTurn(85, diam, track);
-         robotState = STREET_1;
        }else{
          lineFollow(reflectance1, reflectance2);
        }
@@ -302,6 +291,10 @@ void updateRobotState(void){
        }else{
          lineFollow(reflectance1, reflectance2);
        }
+
+      break;
+
+    case end:
 
       break;
   }
