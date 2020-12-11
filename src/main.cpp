@@ -124,8 +124,7 @@ void deliverBag(void){ //for bag delivery
         }
       if (bagState == 3){
           lifter.write(deliverC); //to place on 8mm
-          //back up
-          left_motor.startMoveFor(-90, 120);
+          left_motor.startMoveFor(-90, 120); //back up
           right_motor.moveFor(-90, 120);
         }
   }
