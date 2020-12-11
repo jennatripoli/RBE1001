@@ -30,19 +30,19 @@ const int reflectancePin2=36;
 int reflectance1;
 int reflectance2;
 int threshold = 1200;
-double kp = 0.05;
+double kp = 0.035;
 
 //for servo arm
 Servo lifter;
 const int servoPin = 33;
 int deliverA = 0; // bag 1
-int deliverB = 80; // bag 2
+int deliverB = 90; // bag 2
 int deliverC = 135; // bag 3
 
 //state machine
 enum ROBOT_STATES{LINE_FOLLOW_OUT, APPROACH_BAG, STREET_1, STREET_2, STREET_3, STREET_4, STREET_5, LINE_FOLLOW_CRUTCH, end};
 int robotState;
-int bagState = 1; // 0 = STREET_3, 1 = STREET_4, 2 = STREET_5
+int bagState = 0; // 0 = STREET_3, 1 = STREET_4, 2 = STREET_5
 
 //functions
 void lineFollow(int reflectance1, int reflectance2);
@@ -158,7 +158,6 @@ void turnToObject(float distanceFromObject) { //Uses rangefinder to locate and p
 
 void dropOffBag(){ //Drops the bags off
   hardTurn(180);
-  bagState ++;
   if (bagState == 1){
     lifter.write(deliverA);
   } else if (bagState == 2){
@@ -199,8 +198,8 @@ void updateRobotState(void){
            softTurn(-85);
            robotState = LINE_FOLLOW_OUT;
           } else if (bagState == 2){
-           straight(2);
-           robotState = STREET_3;
+           softTurn(85);
+           robotState = LINE_FOLLOW_OUT;
           } else if (bagState == 3){
            straight (10);
            robotState = end;
@@ -232,18 +231,19 @@ void updateRobotState(void){
        }
       break;
 
-  case STREET_2:  // Robot returning from the STREET_1 and deciding which street to put bags down
+  case STREET_2:    // Robot returning from the STREET_1 and deciding which street to put bags down
       if ((reflectance1 > threshold) && (reflectance2 > threshold)){
          left_motor.setSpeed(0);
          right_motor.setSpeed(0);
          delay(100);
-         if (bagState == 0){
+         bagState ++;
+         if (bagState == 1){
            softTurn(85);
            robotState = STREET_3;
-         } else if (bagState == 1){
+         } else if (bagState == 2){
            softTurn(-85);
            robotState = STREET_4;
-         } else if (bagState == 2){
+         } else if (bagState == 3){
            straight(2);
            robotState = STREET_5;
          }   
@@ -257,17 +257,8 @@ void updateRobotState(void){
          left_motor.setSpeed(0);
          right_motor.setSpeed(0);
          delay(100);
-         if (bagState == 2 ){
-          hardTurn(90);
-          straight(5);
-          turnToObject(bagThreshold);
-          hardTurn(-45);
-          robotState = STREET_2;
-         } else {
-          delay(100);
-          dropOffBag();
-          robotState = LINE_FOLLOW_CRUTCH;
-         }
+         dropOffBag();
+         robotState = LINE_FOLLOW_CRUTCH;
        }else{
          lineFollow(reflectance1, reflectance2);
        }
