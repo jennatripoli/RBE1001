@@ -1,9 +1,7 @@
 #include <Arduino.h>
 #include <RBE1001Lib.h>
 
-//for sensors
-const int reflectancePin1=39;
-const int reflectancePin2=36;
+//for rangefinder
 Rangefinder ultrasonic;
 int bagApproachThreshold = 20;
 int bagThreshold = 0;
@@ -12,7 +10,7 @@ int zoneThreshold = 3;
 double atStopPointLeft = 0;
 double atStopPointRight = 0;
 
-//button
+//button for starting program
 const int buttonPin = BOOT_FLAG_PIN;
 bool upDown=false;
 
@@ -26,7 +24,9 @@ double distanceCorrection = 0.95;
 double bagDistance;
 double zoneDistance;
 
-//for line following (calling the linefollowing sensor functions)
+//for line following
+const int reflectancePin1=39;
+const int reflectancePin2=36;
 int reflectance1;
 int reflectance2;
 int threshold = 1200;
@@ -35,9 +35,9 @@ double kp = 0.035;
 //for servo arm
 Servo lifter;
 const int servoPin = 33;
-int deliverA = 0;
-int deliverB = 90;
-int deliverC = 135;
+int deliverA = 0; // bag 1
+int deliverB = 90; // bag 2
+int deliverC = 135; // bag 3
 
 //state machine
 enum ROBOT_STATES{LINE_FOLLOW_OUT, APPROACH_BAG, STREET_1, STREET_2, STREET_3, STREET_4, STREET_5, LINE_FOLLOW_CRUTCH, end};
@@ -62,7 +62,6 @@ void setup() {
   right_motor.attach(MOTOR_RIGHT_PWM, MOTOR_RIGHT_DIR, MOTOR_RIGHT_ENCA, MOTOR_RIGHT_ENCB);
   ultrasonic.attach(SIDE_ULTRASONIC_TRIG, SIDE_ULTRASONIC_ECHO);
   lifter.attach(servoPin);
-
   pinMode(reflectancePin1,INPUT);
   pinMode(reflectancePin2,INPUT);
   robotState = LINE_FOLLOW_OUT;
@@ -113,16 +112,14 @@ void deliverBag(void){ //for bag delivery
   if (ultrasonicRead() > zoneThreshold){
      lineFollow (reflectance1, reflectance2);
        if (bagState == 1){
-          lifter.write(deliverA); //to place on the ground
-          //back up
-          left_motor.startMoveFor(-90, 120);
+          lifter.write(deliverA); //to place on the ground         
+          left_motor.startMoveFor(-90, 120);//back up
           right_motor.moveFor(-90, 120);
         }
        if (bagState == 2){
           delay(100);
           lifter.write(deliverB); //to place on 4mm
-          //back up
-          left_motor.startMoveFor(-90, 120);
+          left_motor.startMoveFor(-90, 120);//back up
           right_motor.moveFor(-90, 120);
         }
       if (bagState == 3){
@@ -134,7 +131,7 @@ void deliverBag(void){ //for bag delivery
   }
 }
 
-void turnToObject(float distanceFromObject) {
+void turnToObject(float distanceFromObject) { //Uses rangefinder to locate and pickup bag
   delay(200);
   lifter.write(0);
     while (ultrasonic.getDistanceCM() > distanceFromObject) { // while object is out of range
@@ -147,8 +144,8 @@ void turnToObject(float distanceFromObject) {
       hardTurn((rightEdge - leftEdge) / 4, diam, track); // turn ccw to center of object (average between the two edges)
     while (ultrasonic.getDistanceCM() > distanceToBag) {
     float error = ultrasonic.getDistanceCM();
-    left_motor.setEffort(error * kp / 1.9);
-    right_motor.setEffort(error * kp/2);
+    left_motor.setEffort(error * kp / 1.9); // different value to fix motor
+    right_motor.setEffort(error * kp / 2);
     }
     left_motor.setEffort(0);
     right_motor.setEffort(0);
@@ -158,10 +155,9 @@ void turnToObject(float distanceFromObject) {
     lifter.write(180);
     delay(500);
     straight(3, diam);
-    //hardTurn(15-(rightEdge + leftEdge)/2, diam, track);
 }
 
-void dropOffBag(){
+void dropOffBag(){ //Drops the bags off
   hardTurn(180, diam, track);
   if (bagState == 1){
     lifter.write(deliverA);
@@ -173,7 +169,7 @@ void dropOffBag(){
   delay(500);
 }
 
-void pickupBag(){
+void pickupBag(){ // Picks up the bags
   straight(-5,diam);
   hardTurn(-30, diam, track);
   bagThreshold = 30;
@@ -184,7 +180,7 @@ void updateRobotState(void){
  
   switch (robotState){
 
-  case LINE_FOLLOW_OUT:     
+  case LINE_FOLLOW_OUT:  // Robot goes down STREET_2 heading towards the Bag Pick Up area
         if ((reflectance1 >= threshold) && (reflectance2 >= threshold)){ //when it sees pick up zone
           delay(100);
           atStopPointLeft = left_motor.getCurrentDegrees(); //save position for free-range finding
@@ -197,7 +193,7 @@ void updateRobotState(void){
         }
         break;
 
-  case LINE_FOLLOW_CRUTCH:
+  case LINE_FOLLOW_CRUTCH: // After Robot drops off bags. Decides which way to turn to get back to STREET_2
         if ((reflectance1 >= threshold) && (reflectance2 >= threshold)){
           if (bagState == 1){
            softTurn(-85, diam, track);
@@ -215,7 +211,7 @@ void updateRobotState(void){
 
         break;
   
-  case APPROACH_BAG:     
+  case APPROACH_BAG:    // Approaches to pick up bag
       if ((reflectance1 > threshold) && (reflectance2 > threshold)){
          pickupBag();
          robotState = STREET_1;
@@ -224,8 +220,8 @@ void updateRobotState(void){
        }
       break;
 
-  case STREET_1:    
-      if ((reflectance1 > threshold) && (reflectance2 > threshold)){//////////////////////////PREDICTED PROBLEM
+  case STREET_1:    //Robot leaving Bag Pick Up area
+      if ((reflectance1 > threshold) && (reflectance2 > threshold)){
          left_motor.setSpeed(0);
          right_motor.setSpeed(0);
          delay(100);
@@ -236,7 +232,7 @@ void updateRobotState(void){
        }
       break;
 
-  case STREET_2:    // from the quad
+  case STREET_2:    // Robot returning from the STREET_1 and deciding which street to put bags down
       if ((reflectance1 > threshold) && (reflectance2 > threshold)){
          left_motor.setSpeed(0);
          right_motor.setSpeed(0);
@@ -257,7 +253,7 @@ void updateRobotState(void){
        }
       break;
 
-  case STREET_3:    
+  case STREET_3:   // First Bag drop off
       if ((reflectance1 > threshold) && (reflectance2 > threshold)){
          left_motor.setSpeed(0);
          right_motor.setSpeed(0);
@@ -269,8 +265,8 @@ void updateRobotState(void){
        }
       break;
 
-    case STREET_4:
-      if ((reflectance1 > threshold) && (reflectance2 > threshold)){//////////////////////////PREDICTED PROBLEM
+    case STREET_4:  // Second Bag drop off
+      if ((reflectance1 > threshold) && (reflectance2 > threshold)){
          left_motor.setSpeed(0);
          right_motor.setSpeed(0);
          delay(100);
@@ -281,8 +277,8 @@ void updateRobotState(void){
        }
       break;
 
-    case STREET_5:
-      if ((reflectance1 > threshold) && (reflectance2 > threshold)){//////////////////////////PREDICTED PROBLEM
+    case STREET_5:  // Third Bag drop off
+      if ((reflectance1 > threshold) && (reflectance2 > threshold)){
          left_motor.setSpeed(0);
          right_motor.setSpeed(0);
          delay(100);
@@ -294,7 +290,7 @@ void updateRobotState(void){
 
       break;
 
-    case end:
+    case end: // Ends function and concludes
 
       break;
   }
@@ -302,12 +298,11 @@ void updateRobotState(void){
 
 void loop() { 
  while(digitalRead(buttonPin)) {} //wait for button press
-  delay (500);
+  delay (500); // Lets Robot Prep itself
 
   while(true){
    reflectance1=analogRead(reflectancePin1);
    reflectance2=analogRead(reflectancePin2);
-
    updateRobotState();
   }
 }
