@@ -1,6 +1,5 @@
 #include <Arduino.h>
 #include <RBE1001Lib.h>
-//#include <ESP32Servo.h>
 
 //for sensors
 const int reflectancePin1=39;
@@ -9,13 +8,9 @@ Rangefinder ultrasonic;
 int bagApproachThreshold = 20;
 int bagThreshold = 0;
 double distanceToBag = 5.0;
-int zoneApproachThreshold = 10;
 int zoneThreshold = 3;
-int distanceToB = 7;
 double atStopPointLeft = 0;
 double atStopPointRight = 0;
-double facingCenterLeft = 0;
-double facingCenterRight = 0;
 
 //button
 const int buttonPin = BOOT_FLAG_PIN;
@@ -34,11 +29,8 @@ double zoneDistance;
 //for line following (calling the linefollowing sensor functions)
 int reflectance1;
 int reflectance2;
-int threshold = 1000;
-double kp = 0.032;
-
-//for main control
-int bagCount = 0;
+int threshold = 1200;
+double kp = 0.035;
 
 //for servo arm
 Servo lifter;
@@ -47,16 +39,12 @@ int deliverA = 0;
 int deliverB = 90;
 int deliverC = 135;
 
-//state machines
-//enum ROBOT_STATES{LINE_FOLLOW_OUT, APPROACH_BAG, COLLECT_BAG, LINE_FOLLOW_BACK, INTERSECTION_BACK, APPROACH_ZONE, DELIVER_BAG, APPROACH_INTERSECTION, INTERSECTION_OUT, FREE_RANGE_COLLECT};
+//state machine
 enum ROBOT_STATES{LINE_FOLLOW_OUT, APPROACH_BAG, STREET_1, STREET_2A,STREET_2B, STREET_3, STREET_4, STREET_5, LINE_FOLLOW_CRUTCH};
 int robotState;
-
-enum BAG_STATES{START, A, B, C};
-int bagState;
+int bagState = 0; // 0 = STREET_3, 1 = STREET_4, 2 = STREET_5
 
 //functions
-void updateBagState(void);
 void lineFollow(int reflectance1, int reflectance2);
 void hardTurn(double angle, double diam3, double track2);
 void softTurn(double angle, double diam3, double track2);
@@ -78,10 +66,9 @@ void setup() {
   pinMode(reflectancePin1,INPUT);
   pinMode(reflectancePin2,INPUT);
   robotState = LINE_FOLLOW_OUT;
-  bagState = START;
 }
 
-void lineFollow(int reflectance_1, int reflectance_2){ //line following function
+void lineFollow(int reflectance_1 , int reflectance_2){ //line following function
   float error = reflectance_1 - reflectance_2;
   float effort = kp * error;
   right_motor.setSpeed(defaultSpeed+effort);
@@ -125,20 +112,20 @@ void straight(double distance, double wheelDiameter) {
 void deliverBag(void){ //for bag delivery
   if (ultrasonicRead() > zoneThreshold){
      lineFollow (reflectance1, reflectance2);
-       if (bagState == A){
+       if (bagState == 1){
           lifter.write(deliverA); //to place on the ground
           //back up
           left_motor.startMoveFor(-90, 120);
           right_motor.moveFor(-90, 120);
         }
-       if (bagState == B){
+       if (bagState == 2){
           delay(100);
           lifter.write(deliverB); //to place on 4mm
           //back up
           left_motor.startMoveFor(-90, 120);
           right_motor.moveFor(-90, 120);
         }
-      if (bagState == C){
+      if (bagState == 3){
           lifter.write(deliverC); //to place on 8mm
           //back up
           left_motor.startMoveFor(-90, 120);
@@ -176,13 +163,14 @@ void turnToObject(float distanceFromObject) {
 
 void dropOffBag(){
   hardTurn(180, diam, track);
-  if (bagState = (A)){
+  if (bagState == 1){
     lifter.write(deliverA);
-  } else if (bagState = (B)){
+  } else if (bagState == 2){
     lifter.write(deliverB);
-  } else if (bagState = (C)){
+  } else if (bagState == 3){
     lifter.write(deliverC);
   }
+  delay(1000);
 }
 
 void pickupBag(){
@@ -211,12 +199,14 @@ void updateRobotState(void){
 
   case LINE_FOLLOW_CRUTCH:
         if ((reflectance1 >= threshold) && (reflectance2 >= threshold)){
-          if (bagState = (A)){
+          if (bagState == 1){
            softTurn(-85, diam, track);
            robotState = LINE_FOLLOW_OUT;
-          } else if (bagState = (B)){
+          } else if (bagState == 2){
            softTurn(85, diam, track);
            robotState = LINE_FOLLOW_OUT;
+          } else if (bagState == 3){
+           straight (10, diam);
           }
         }else{
            lineFollow(reflectance1, reflectance2);
@@ -250,22 +240,17 @@ void updateRobotState(void){
          left_motor.setSpeed(0);
          right_motor.setSpeed(0);
          delay(100);
-         bagCount ++;
-         if (bagState = (A)){
+         bagState ++;
+         if (bagState == 1){
            softTurn(85, diam, track);
            robotState = STREET_3;
-         } else if (bagState = (B)){
+         } else if (bagState == 2){
            softTurn(-85, diam, track);
            robotState = STREET_4;
-         } else if (bagState = (C)){
+         } else if (bagState == 3){
            straight(2, diam);
            robotState = STREET_5;
-         } else {
-           lifter.write(180); /////////Diagnosing problems
-           lifter.write(90);  /////////Diagnosing problems
-         }
-         
-         
+         }   
        }else{
          lineFollow(reflectance1, reflectance2);
        }
@@ -284,27 +269,23 @@ void updateRobotState(void){
       break;
 
   case STREET_3:    
-      if ((reflectance1 > threshold) && (reflectance2 > threshold)){//////////////////////////PREDICTED PROBLEM
+      if ((reflectance1 > threshold) && (reflectance2 > threshold)){
          left_motor.setSpeed(0);
          right_motor.setSpeed(0);
          delay(100);
          dropOffBag();
-         updateBagState();
          robotState = LINE_FOLLOW_CRUTCH;
        }else{
          lineFollow(reflectance1, reflectance2);
        }
-
       break;
 
     case STREET_4:
       if ((reflectance1 > threshold) && (reflectance2 > threshold)){//////////////////////////PREDICTED PROBLEM
          left_motor.setSpeed(0);
          right_motor.setSpeed(0);
-
          delay(100);
          dropOffBag();
-         updateBagState();
          robotState = LINE_FOLLOW_CRUTCH;
        }else{
          lineFollow(reflectance1, reflectance2);
@@ -315,38 +296,14 @@ void updateRobotState(void){
       if ((reflectance1 > threshold) && (reflectance2 > threshold)){//////////////////////////PREDICTED PROBLEM
          left_motor.setSpeed(0);
          right_motor.setSpeed(0);
-         lifter.write(90);
          delay(100);
          dropOffBag();
+         robotState = LINE_FOLLOW_CRUTCH;
        }else{
          lineFollow(reflectance1, reflectance2);
        }
 
       break;
-  }
-}
-
-void updateBagState(void){ //for bag-based control
-  switch(bagState){
-    case START:
-      if (bagCount == 1){
-        bagState = A;
-      }
-      break;
-
-    case A:
-       if (bagCount == 2){
-          bagState = B;
-       }
-       break;
-
-    case B:
-        if (bagCount == 3){
-        bagState = C;
-        }
-        break;
-    case C:
-    break;
   }
 }
 
@@ -359,6 +316,5 @@ void loop() {
    reflectance2=analogRead(reflectancePin2);
 
    updateRobotState();
-   updateBagState();
   }
 }
