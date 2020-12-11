@@ -46,12 +46,12 @@ int bagState = 0; // 0 = STREET_3, 1 = STREET_4, 2 = STREET_5
 
 //functions
 void lineFollow(int reflectance1, int reflectance2);
-void hardTurn(double angle, double diam3, double track2);
-void softTurn(double angle, double diam3, double track2);
-double ultrasonicRead ();
+void hardTurn(double angle);
+void softTurn(double angle);
+double ultrasonicRead();
 void deliverBag(void);
 void findFreeBag(double ultrasonic_distance);
-void straight(double distance, double wheelDiameter);
+void straight(double distance);
 
 void setup() {
   Motor::allocateTimer(0);
@@ -74,18 +74,18 @@ void lineFollow(int reflectance_1 , int reflectance_2){ //line following functio
   left_motor.setSpeed(defaultSpeed-effort);
 }
 
-void hardTurn(double angle, double diam3, double track2){ //for navigation
+void hardTurn(double angle){ //for navigation
     left_motor.setSpeed(0);
     right_motor.setSpeed(0);
-    double degreeMove = (angle*track2)/diam3;
+    double degreeMove = (angle*track)/diam;
     left_motor.startMoveFor(degreeMove, 120);
     right_motor.moveFor(-degreeMove, 120);
     left_motor.setSpeed(0);
     right_motor.setSpeed(0);
   }
 
-void softTurn(double angle, double diam3, double track2){ //for navigation
-    double degreeMove = (2*angle*track2)/diam3;
+void softTurn(double angle){ //for navigation
+    double degreeMove = (2*angle*track)/diam;
     if (angle >= 0){
       left_motor.setSpeed(0);
       right_motor.setSpeed(0);
@@ -101,10 +101,10 @@ void softTurn(double angle, double diam3, double track2){ //for navigation
     }
   }
 
-void straight(double distance, double wheelDiameter) {
-  double spin = (360*distance)/(wheelDiameter*PI);
-  left_motor.startMoveFor(spin, 150);
-  right_motor.moveFor(spin, 150);
+void straight(double distance) { // lets robot travel in a straight line
+  double spin = (360*distance)/(diam*PI);
+  left_motor.startMoveFor(spin, defaultSpeed);
+  right_motor.moveFor(spin, defaultSpeed);
 }
 
 
@@ -141,7 +141,7 @@ void turnToObject(float distanceFromObject) { //Uses rangefinder to locate and p
     double leftEdge = right_motor.getCurrentDegrees(), rightEdge = leftEdge; // default for rightEdge causes no turning
     while (ultrasonic.getDistanceCM() < distanceFromObject) {} // wait for the object to get out of range
     if (ultrasonic.getDistanceCM() > distanceFromObject) rightEdge = right_motor.getCurrentDegrees(); // when object is out of range
-      hardTurn((rightEdge - leftEdge) / 4, diam, track); // turn ccw to center of object (average between the two edges)
+      hardTurn((rightEdge - leftEdge) / 4); // turn ccw to center of object (average between the two edges)
     while (ultrasonic.getDistanceCM() > distanceToBag) {
     float error = ultrasonic.getDistanceCM();
     left_motor.setEffort(error * kp / 1.9); // different value to fix motor
@@ -149,16 +149,16 @@ void turnToObject(float distanceFromObject) { //Uses rangefinder to locate and p
     }
     left_motor.setEffort(0);
     right_motor.setEffort(0);
-    straight(-2, diam);
-    hardTurn(170, diam, track);
-    straight(-3, diam);
+    straight(-2);
+    hardTurn(170);
+    straight(-3);
     lifter.write(180);
     delay(500);
-    straight(3, diam);
+    straight(3);
 }
 
 void dropOffBag(){ //Drops the bags off
-  hardTurn(180, diam, track);
+  hardTurn(180);
   if (bagState == 1){
     lifter.write(deliverA);
   } else if (bagState == 2){
@@ -170,8 +170,8 @@ void dropOffBag(){ //Drops the bags off
 }
 
 void pickupBag(){ // Picks up the bags
-  straight(-5,diam);
-  hardTurn(-30, diam, track);
+  straight(-5);
+  hardTurn(-30);
   bagThreshold = 30;
   turnToObject(bagThreshold);
 }
@@ -186,7 +186,7 @@ void updateRobotState(void){
           atStopPointLeft = left_motor.getCurrentDegrees(); //save position for free-range finding
           atStopPointRight = right_motor.getCurrentDegrees();
           delay(100);
-          softTurn(-85, diam, track);
+          softTurn(-85);
           robotState = APPROACH_BAG;
         } else {
           lineFollow(reflectance1, reflectance2);
@@ -196,13 +196,13 @@ void updateRobotState(void){
   case LINE_FOLLOW_CRUTCH: // After Robot drops off bags. Decides which way to turn to get back to STREET_2
         if ((reflectance1 >= threshold) && (reflectance2 >= threshold)){
           if (bagState == 1){
-           softTurn(-85, diam, track);
+           softTurn(-85);
            robotState = LINE_FOLLOW_OUT;
           } else if (bagState == 2){
-           softTurn(85, diam, track);
+           softTurn(85);
            robotState = LINE_FOLLOW_OUT;
           } else if (bagState == 3){
-           straight (10, diam);
+           straight (10);
            robotState = end;
           }
         }else{
@@ -225,7 +225,7 @@ void updateRobotState(void){
          left_motor.setSpeed(0);
          right_motor.setSpeed(0);
          delay(100);
-         softTurn(85, diam, track);
+         softTurn(85);
          robotState = STREET_2;
        }else{
          lineFollow(reflectance1, reflectance2);
@@ -239,13 +239,13 @@ void updateRobotState(void){
          delay(100);
          bagState ++;
          if (bagState == 1){
-           softTurn(85, diam, track);
+           softTurn(85);
            robotState = STREET_3;
          } else if (bagState == 2){
-           softTurn(-85, diam, track);
+           softTurn(-85);
            robotState = STREET_4;
          } else if (bagState == 3){
-           straight(2, diam);
+           straight(2);
            robotState = STREET_5;
          }   
        }else{
@@ -290,7 +290,7 @@ void updateRobotState(void){
 
       break;
 
-    case end: // Ends function and concludes
+    case end: // Ends function and concludes program
 
       break;
   }
