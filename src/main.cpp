@@ -182,8 +182,10 @@ void updateRobotState(void){
 
   case LINE_FOLLOW_OUT:  // Robot goes down STREET_2 heading towards the Bag Pick Up area
         if ((reflectance1 >= threshold) && (reflectance2 >= threshold)){ //when it sees pick up zone
+          delay(50);
           atStopPointLeft = left_motor.getCurrentDegrees(); //save position for free-range finding
           atStopPointRight = right_motor.getCurrentDegrees();
+          delay(50);
           softTurn(-85);
           robotState = APPROACH_BAG;
         } else {
