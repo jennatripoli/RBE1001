@@ -78,8 +78,8 @@ void hardTurn(double angle){ //for navigation
     left_motor.setSpeed(0);
     right_motor.setSpeed(0);
     double degreeMove = (angle*track)/diam;
-    left_motor.startMoveFor(degreeMove, 120);
-    right_motor.moveFor(-degreeMove, 120);
+    left_motor.startMoveFor(degreeMove, 100);
+    right_motor.moveFor(-degreeMove, 100);
     left_motor.setSpeed(0);
     right_motor.setSpeed(0);
   }
@@ -89,13 +89,13 @@ void softTurn(double angle){ //for navigation
     if (angle >= 0){
       left_motor.setSpeed(0);
       right_motor.setSpeed(0);
-      left_motor.moveFor(degreeMove, 120);
+      left_motor.moveFor(degreeMove, 100);
       left_motor.setSpeed(0);
       right_motor.setSpeed(0);
     }else{ 
       left_motor.setSpeed(0);
       right_motor.setSpeed(0);
-      right_motor.moveFor(-degreeMove, 120);
+      right_motor.moveFor(-degreeMove, 100);
       left_motor.setSpeed(0);
       right_motor.setSpeed(0);
     }
