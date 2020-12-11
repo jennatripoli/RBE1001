@@ -111,8 +111,9 @@ void straight(double distance) { // lets robot travel in a straight line
 void deliverBag(void){ //for bag delivery
   if (ultrasonicRead() > zoneThreshold){
      lineFollow (reflectance1, reflectance2);
+     straight(-3);
        if (bagState == 1){
-          lifter.write(deliverA); //to place on the ground         
+          lifter.write(deliverA); //to place on the ground 
           left_motor.startMoveFor(-90, 120);//back up
           right_motor.moveFor(-90, 120);
         }
@@ -140,7 +141,7 @@ void turnToObject(float distanceFromObject) { //Uses rangefinder to locate and p
     double leftEdge = right_motor.getCurrentDegrees(), rightEdge = leftEdge; // default for rightEdge causes no turning
     while (ultrasonic.getDistanceCM() < distanceFromObject) {} // wait for the object to get out of range
     if (ultrasonic.getDistanceCM() > distanceFromObject) rightEdge = right_motor.getCurrentDegrees(); // when object is out of range
-      hardTurn((rightEdge - leftEdge) / 4); // turn ccw to center of object (average between the two edges)
+      hardTurn(((rightEdge - leftEdge) / 4) - 5); // turn ccw to center of object (average between the two edges)
     while (ultrasonic.getDistanceCM() > distanceToBag) {
     float error = ultrasonic.getDistanceCM();
     left_motor.setEffort(error * kp / 1.9); // different value to fix motor
