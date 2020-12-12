@@ -19,7 +19,7 @@ Motor left_motor;
 Motor right_motor;
 double diam = 2.75;
 double track = 5.875;
-int defaultSpeed = 150;
+int defaultSpeed = 210;
 double distanceCorrection = 0.95;
 double bagDistance;
 double zoneDistance;
@@ -30,7 +30,7 @@ const int reflectancePin2=36;
 int reflectance1;
 int reflectance2;
 int threshold = 1200;
-double kp = 0.035;
+double kp = 0.05;
 
 //for servo arm
 Servo lifter;
@@ -296,13 +296,54 @@ void updateRobotState(void){
   }
 }
 
+void routine() {
+  straight(23);
+  softTurn(83);
+  lifter.write(0);
+  straight(-8);
+  lifter.write(135);
+
+  straight(5);
+  softTurn(85);
+  straight(20);
+
+  softTurn(-85);
+  straight(-11);
+  lifter.write(0);
+  delay(500);
+  straight(5);
+  softTurn(83);
+
+  straight(-37);
+  softTurn(-83);
+  lifter.write(0);
+  straight(-8);
+  lifter.write(135);  
+
+  straight(5);
+  softTurn(85);
+  straight(25);
+
+  softTurn(85);
+  straight(-8);
+  lifter.write(0);
+  delay(500);
+  straight(4);
+}
+
+int i = 1;
 void loop() { 
  while(digitalRead(buttonPin)) {} //wait for button press
   delay (500); // Lets Robot Prep itself
 
-  while(true){
+  while (i == 1) {
+    routine();
+    i++;
+  }
+
+  /*while(true){
    reflectance1=analogRead(reflectancePin1);
    reflectance2=analogRead(reflectancePin2);
    updateRobotState();
-  }
+  }*/
 }
