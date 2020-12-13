@@ -336,14 +336,14 @@ void loop() {
  while(digitalRead(buttonPin)) {} //wait for button press
   delay (500); // Lets Robot Prep itself
 
-  while (i == 1) {
+  /*while (i == 1) {
     routine();
     i++;
-  }
+  }*/
 
-  /*while(true){
+  while(true){
    reflectance1=analogRead(reflectancePin1);
    reflectance2=analogRead(reflectancePin2);
    updateRobotState();
-  }*/
+  }
 }
