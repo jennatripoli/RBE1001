@@ -256,8 +256,16 @@ void updateRobotState(void){
           straight(5);
           hardTurn(-30);
           delay(100);
-          turnToObject(bagThreshold);
-          delay(100);
+          //turnToObject(bagThreshold);
+          hardTurn(35); //deadreckon start
+          hardTurn(-3);
+          straight(5);
+          straight(-2);
+          hardTurn(170);
+          straight(-3);
+          lifter.write(180);
+          delay(500);
+          straight(3); //end of dead reckon
           hardTurn(-45);
           robotState = STREET_2;
          } else {
