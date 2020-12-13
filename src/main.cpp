@@ -3,10 +3,11 @@
 
 //for rangefinder
 Rangefinder ultrasonic;
-int bagApproachThreshold = 20;
-int bagThreshold = 0;
+int bagThreshold = 30;
 double distanceToBag = 5.0;
 int zoneThreshold = 3;
+double leftEdge = 0;
+double rightEdge = 0;
 
 //button for starting program
 const int buttonPin = BOOT_FLAG_PIN;
@@ -48,7 +49,7 @@ void hardTurn(double angle);
 void softTurn(double angle);
 double ultrasonicRead();
 void deliverBag(void);
-void findFreeBag(double ultrasonic_distance);
+void turnToObject(float);
 void straight(double distance);
 
 void setup() {
@@ -129,13 +130,15 @@ void deliverBag(void){ //for bag delivery
 }
 
 void turnToObject(float distanceFromObject) { //Uses rangefinder to locate and pickup bag
-  delay(200);
-  lifter.write(0);
+  delay(100);
+  leftEdge = 0;
+  rightEdge = 0;
+  lifter.write(1);
     while (ultrasonic.getDistanceCM() > distanceFromObject) { // while object is out of range
         left_motor.setEffort(0.2);
         right_motor.setEffort(-0.2);
     }
-    double leftEdge = right_motor.getCurrentDegrees(), rightEdge = leftEdge; // default for rightEdge causes no turning
+    leftEdge = right_motor.getCurrentDegrees(), rightEdge = leftEdge; // default for rightEdge causes no turning
     while (ultrasonic.getDistanceCM() < distanceFromObject) {} // wait for the object to get out of range
     if (ultrasonic.getDistanceCM() > distanceFromObject) rightEdge = right_motor.getCurrentDegrees(); // when object is out of range
       hardTurn((rightEdge - leftEdge) / 4); // turn ccw to center of object (average between the two edges)
@@ -165,13 +168,6 @@ void dropOffBag(){ //Drops the bags off
     lifter.write(deliverC);
   }
   delay(500);
-}
-
-void pickupBag(){ // Picks up the bags
-  straight(-5);
-  hardTurn(-30);
-  bagThreshold = 30;
-  turnToObject(bagThreshold);
 }
 
 void updateRobotState(void){
@@ -209,7 +205,9 @@ void updateRobotState(void){
   
   case APPROACH_BAG:    // Approaches to pick up bag
       if ((reflectance1 > threshold) && (reflectance2 > threshold)){
-         pickupBag();
+         straight(-5);
+         hardTurn(-30);
+         turnToObject(bagThreshold);
          robotState = STREET_1;
        }else{
          lineFollow(reflectance1, reflectance2);
@@ -256,7 +254,10 @@ void updateRobotState(void){
          if (bagState == 2 ){
           hardTurn(90);
           straight(5);
+          hardTurn(-30);
+          delay(100);
           turnToObject(bagThreshold);
+          delay(100);
           hardTurn(-45);
           robotState = STREET_2;
          } else {
