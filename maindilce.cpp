@@ -3,7 +3,7 @@
 
 //for rangefinder
 Rangefinder ultrasonic;
-int bagThreshold = 30;
+int bagThreshold = 20;
 double distanceToBag = 3.0;
 int zoneThreshold = 3;
 double leftEdge = 0;
@@ -133,18 +133,18 @@ void turnToObject(float distanceFromObject) { //Uses rangefinder to locate and p
   delay(100);
   leftEdge = 0;
   rightEdge = 0;
-  lifter.write(1);
+  lifter.write(0);
     while (ultrasonic.getDistanceCM() > distanceFromObject) { // while object is out of range
         left_motor.setEffort(0.2);
         right_motor.setEffort(-0.2);
     }
-    leftEdge = right_motor.getCurrentDegrees(), rightEdge = leftEdge; // default for rightEdge causes no turning
+    leftEdge = right_motor.getCurrentDegrees(); //, rightEdge = leftEdge; // default for rightEdge causes no turning
     while (ultrasonic.getDistanceCM() < distanceFromObject) {} // wait for the object to get out of range
     if (ultrasonic.getDistanceCM() > distanceFromObject) rightEdge = right_motor.getCurrentDegrees(); // when object is out of range
-      hardTurn((rightEdge - leftEdge) / 4); // turn ccw to center of object (average between the two edges)
+    hardTurn((rightEdge - leftEdge) / 4); // turn ccw to center of object (average between the two edges)
     while (ultrasonic.getDistanceCM() > distanceToBag) {
     float error = ultrasonic.getDistanceCM();
-    left_motor.setEffort(error * kp / 1.9); // different value to fix motor
+    left_motor.setEffort(error * kp / 2);
     right_motor.setEffort(error * kp / 2);
     }
     left_motor.setEffort(0);
