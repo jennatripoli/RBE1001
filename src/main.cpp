@@ -7,8 +7,6 @@ int bagApproachThreshold = 20;
 int bagThreshold = 0;
 double distanceToBag = 5.0;
 int zoneThreshold = 3;
-double atStopPointLeft = 0;
-double atStopPointRight = 0;
 
 //button for starting program
 const int buttonPin = BOOT_FLAG_PIN;
@@ -84,7 +82,7 @@ void hardTurn(double angle){ //for navigation
     right_motor.setSpeed(0);
   }
 
-void softTurn(double angle){ //for navigation
+void softTurn(double angle){ //for navigation   
     double degreeMove = (2*angle*track)/diam;
     if (angle >= 0){
       left_motor.setSpeed(0);
@@ -182,9 +180,6 @@ void updateRobotState(void){
 
   case LINE_FOLLOW_OUT:  // Robot goes down STREET_2 heading towards the Bag Pick Up area
         if ((reflectance1 >= threshold) && (reflectance2 >= threshold)){ //when it sees pick up zone
-          delay(50);
-          atStopPointLeft = left_motor.getCurrentDegrees(); //save position for free-range finding
-          atStopPointRight = right_motor.getCurrentDegrees();
           delay(50);
           softTurn(-85);
           robotState = APPROACH_BAG;
