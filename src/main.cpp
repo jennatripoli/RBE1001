@@ -5,7 +5,6 @@
 Rangefinder rangefinder;
 double distanceToBag = 5;  // how far away the robot should be from the bag when picking it up
 int bagThreshold = 30;  // how far away the robot can be to detect a bag
-int zoneThreshold = 3;  //
 
 // button for starting program
 const int buttonPin = BOOT_FLAG_PIN;
@@ -41,7 +40,6 @@ void straight(double distance);
 void pickUpBag(void);
 void dropOffBag(void);
 void updateRobotState(void);
-double ultrasonicRead();  // TODO: where is this??
 
 void setup() {
   Motor::allocateTimer(0);
