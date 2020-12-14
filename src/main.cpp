@@ -170,128 +170,122 @@ void dropOffBag(void) {
  **/
 void updateRobotState(void) {
   switch (robotState) {
-  case LINE_FOLLOW_OUT:  // going down STREET_2 heading towards pick-up zone
-    if ((reflectance1 >= threshold) && (reflectance2 >= threshold)) { // line sensor sees pick-up zone
-      delay(50);
-      softTurn(-85);
-      robotState = APPROACH_BAG;
-    } else lineFollow(reflectance1, reflectance2);
-    break;
-
-  case LINE_FOLLOW_CRUTCH:  // after bag drop-off, deciding how to turn to get back onto STREET_2
-    if ((reflectance1 >= threshold) && (reflectance2 >= threshold)) {  // line sensor sees delivery zone intersection
-      if (bagState == 1) {
+    case LINE_FOLLOW_OUT:  // going down STREET_2 heading towards pick-up zone
+      if ((reflectance1 >= threshold) && (reflectance2 >= threshold)) { // line sensor sees pick-up zone
+        delay(50);
         softTurn(-85);
-        robotState = LINE_FOLLOW_OUT;
-      } else if (bagState == 2) {
-        straight(2);
-        robotState = STREET_3;
-      } else if (bagState == 3) {
-        leftMotor.setSpeed(0);
-        rightMotor.setSpeed(0);
-        robotState = end;
-      }
-    } else lineFollow(reflectance1, reflectance2);
-    break;
-  
-  case APPROACH_BAG:  // approaching to pick up a bag
-    if ((reflectance1 > threshold) && (reflectance2 > threshold)) {  // line sensor sees T at pick-up zone
-      straight(-5);
-      hardTurn(-30);
-      armServo.write(0);
-      pickUpBag();
-      straight(3);
-      robotState = STREET_1;
-    } else lineFollow(reflectance1, reflectance2);
-    break;
+        robotState = APPROACH_BAG;
+      } else lineFollow(reflectance1, reflectance2);
+      break;
 
-  case STREET_1:  // leaving pick-up zone
-    if ((reflectance1 > threshold) && (reflectance2 > threshold)) {  // line sensor seees end of pick-up street
-      leftMotor.setSpeed(0);
-      rightMotor.setSpeed(0);
-      delay(100);
-      softTurn(85);
-      robotState = STREET_2;
-    } else lineFollow(reflectance1, reflectance2);
-    break;
-
-  case STREET_2:  // returning from STREET_1, deciding which street to deliver bag to
-    if ((reflectance1 > threshold) && (reflectance2 > threshold)) {  // line sensor sees delivery zone intersection
-      leftMotor.setSpeed(0);
-      rightMotor.setSpeed(0);
-      delay(100);
-      if (bagState == 0){
-        softTurn(85);
-        robotState = STREET_3;
-      } else if (bagState == 1){
-        softTurn(-85);
-        robotState = STREET_4;
-      } else if (bagState == 2){
-        straight(2);
-        robotState = STREET_5;
-      }   
-    } else lineFollow(reflectance1, reflectance2);
-    break;
-
-  case STREET_3:  // first bag drop-off on zone A and pick up of free-range bag
-    if ((reflectance1 > threshold) && (reflectance2 > threshold)) {  // line sensor sees T at zone A
-      leftMotor.setSpeed(0);
-      rightMotor.setSpeed(0);
-      delay(100);
-      if (bagState == 2) {  // for free-range bag
-        hardTurn(90);
-        straight(5);
+    case LINE_FOLLOW_CRUTCH:  // after bag drop-off, deciding how to turn to get back onto STREET_2
+      if ((reflectance1 >= threshold) && (reflectance2 >= threshold)) {  // line sensor sees delivery zone intersection
+        if (bagState == 1) {
+          softTurn(-85);
+          robotState = LINE_FOLLOW_OUT;
+        } else if (bagState == 2) {
+          straight(2);
+          robotState = STREET_3;
+        } else if (bagState == 3) {
+          leftMotor.setSpeed(0);
+          rightMotor.setSpeed(0);
+          robotState = end;
+        }
+      } else lineFollow(reflectance1, reflectance2);
+      break;
+    
+    case APPROACH_BAG:  // approaching to pick up a bag
+      if ((reflectance1 > threshold) && (reflectance2 > threshold)) {  // line sensor sees T at pick-up zone
+        straight(-5);
         hardTurn(-30);
         armServo.write(0);
-        delay(200);
-        pickUpBag();  // pick up free-range bag
-        hardTurn(-35);
+        pickUpBag();
+        straight(3);
+        robotState = STREET_1;
+      } else lineFollow(reflectance1, reflectance2);
+      break;
+
+    case STREET_1:  // leaving pick-up zone
+      if ((reflectance1 > threshold) && (reflectance2 > threshold)) {  // line sensor seees end of pick-up street
+        leftMotor.setSpeed(0);
+        rightMotor.setSpeed(0);
+        delay(100);
+        softTurn(85);
         robotState = STREET_2;
-      } else {
+      } else lineFollow(reflectance1, reflectance2);
+      break;
+
+    case STREET_2:  // returning from STREET_1, deciding which street to deliver bag to
+      if ((reflectance1 > threshold) && (reflectance2 > threshold)) {  // line sensor sees delivery zone intersection
+        leftMotor.setSpeed(0);
+        rightMotor.setSpeed(0);
+        delay(100);
+        if (bagState == 0){
+          softTurn(85);
+          robotState = STREET_3;
+        } else if (bagState == 1){
+          softTurn(-85);
+          robotState = STREET_4;
+        } else if (bagState == 2){
+          straight(2);
+          robotState = STREET_5;
+        }   
+      } else lineFollow(reflectance1, reflectance2);
+      break;
+
+    case STREET_3:  // first bag drop-off on zone A and pick up of free-range bag
+      if ((reflectance1 > threshold) && (reflectance2 > threshold)) {  // line sensor sees T at zone A
+        leftMotor.setSpeed(0);
+        rightMotor.setSpeed(0);
+        delay(100);
+        if (bagState == 2) {  // for free-range bag
+          hardTurn(90);
+          straight(5);
+          hardTurn(-30);
+          armServo.write(0);
+          delay(200);
+          pickUpBag();  // pick up free-range bag
+          hardTurn(-35);
+          robotState = STREET_2;
+        } else {
+          dropOffBag();
+          robotState = LINE_FOLLOW_CRUTCH;
+        }
+      } else lineFollow(reflectance1, reflectance2);
+      break;
+
+    case STREET_4:  // second bag drop-off on zone B
+      if ((reflectance1 > threshold) && (reflectance2 > threshold)) {  // line sensor sees T at zone B
+        leftMotor.setSpeed(0);
+        rightMotor.setSpeed(0);
+        delay(100);
         dropOffBag();
         robotState = LINE_FOLLOW_CRUTCH;
-      }
-    } else lineFollow(reflectance1, reflectance2);
-    break;
-
-    case STREET_4:  // Second Bag drop off
-      if ((reflectance1 > threshold) && (reflectance2 > threshold)){
-         leftMotor.setSpeed(0);
-         rightMotor.setSpeed(0);
-         delay(100);
-         dropOffBag();
-         robotState = LINE_FOLLOW_CRUTCH;
-       }else{
-         lineFollow(reflectance1, reflectance2);
-       }
+      } else lineFollow(reflectance1, reflectance2);
       break;
 
-    case STREET_5:  // Third Bag drop off
-      if ((reflectance1 > threshold) && (reflectance2 > threshold)){
-         leftMotor.setSpeed(0);
-         rightMotor.setSpeed(0);
-         delay(100);
-         dropOffBag();
-         robotState = LINE_FOLLOW_CRUTCH;
-       }else{
-         lineFollow(reflectance1, reflectance2);
-       }
-
+    case STREET_5:  // third bag (free-rage bag) drop-off on zone C
+      if ((reflectance1 > threshold) && (reflectance2 > threshold)) {  // line sensor sees T at zone C
+        leftMotor.setSpeed(0);
+        rightMotor.setSpeed(0);
+        delay(100);
+        dropOffBag();
+        robotState = LINE_FOLLOW_CRUTCH;
+      } else lineFollow(reflectance1, reflectance2);
       break;
 
-    case end: // Ends function and concludes program
-
+    case end:  // exit program
       break;
   }
 }
 
 void loop() { 
- while(digitalRead(buttonPin)) {} //wait for button press
-  delay (500); // Lets Robot Prep itself
+  while(digitalRead(buttonPin)) {} // wait for button press
+  delay(500);
 
-  while(true){
-   reflectance1=analogRead(reflectancePin1);
-   reflectance2=analogRead(reflectancePin2);
-   updateRobotState();
+  while(true) {
+   reflectance1 = analogRead(reflectancePin1);  // update line sensor pin 1 value
+   reflectance2 = analogRead(reflectancePin2);  // update line sensor pin 2 value
+   updateRobotState();  // enter switch statement
   }
 }
