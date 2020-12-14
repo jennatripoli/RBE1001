@@ -16,12 +16,12 @@ Motor leftMotor, rightMotor;
 float diam = 2.75;  // diameter of drive wheels, in inches
 float track = 5.875;
 float defaultSpeed = 200;  // default speed for driving, in degrees/sec
-float kP = 0.1;  // proportional constant for drive wheels
+float kP = 0.1;  // proportional constant for drive wheels (0.06 on Dilce's bot)
 
 // for line following
 const int reflectancePin1 = 39, reflectancePin2 = 36;
 int reflectance1, reflectance2;  // output of the two line sensor pins
-int threshold = 1200;  // minimum line sensor output for the line to be seen
+int threshold = 1000;  // minimum line sensor output for the line to be seen
 
 //for servo arm
 Servo armServo;
@@ -31,7 +31,7 @@ int deliverA = 0, deliverB = 75, deliverC = 130;  // angles to deliver bags on z
 //state machine
 enum ROBOT_STATES { LINE_FOLLOW_OUT, APPROACH_BAG, STREET_1, STREET_2, STREET_3, STREET_4, STREET_5, LINE_FOLLOW_CRUTCH, end };
 int robotState;
-int bagState = 0;  // 0 = STREET_3, 1 = STREET_4, 2 = STREET_5
+int bagState = 0;  // 0 = Bag 1 (zone A), 1 = Bag 2 (zone B), 2 = Bag 3 (zone C)
 
 // functions
 void lineFollow(int reflectance1, int reflectance2);
@@ -131,20 +131,20 @@ void pickUpBag(void) {
   while (rangefinder.getDistanceCM() < bagThreshold) {}
   rightEdge = rightMotor.getCurrentDegrees();  // degrees when object is out of range
   
-  hardTurn((rightEdge - leftEdge) / 3);  // turn counterclockwise to center of bag
+  hardTurn((rightEdge - leftEdge) / 4);  // turn counterclockwise to center of bag
 
   // approach bag with proportional control
   while (rangefinder.getDistanceCM() > distanceToBag) {
     error = rangefinder.getDistanceCM();
-    leftMotor.setEffort(error * kP / 4);
-    rightMotor.setEffort(error * kP / 4);
+    leftMotor.setEffort(error * kP / 4);  // divided by 2 on Dilce's bot
+    rightMotor.setEffort(error * kP / 4);  // divided by 2 on Dilce's bot
   }
 
   armServo.write(0);
   leftMotor.setSpeed(0);
   rightMotor.setSpeed(0);
   straight(-2);
-  hardTurn(180);
+  hardTurn(170);
   straight(-3.25);
   armServo.write(180);  // pick up bag
   delay(500);
