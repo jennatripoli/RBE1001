@@ -6,8 +6,6 @@ Rangefinder ultrasonic;
 int bagThreshold = 30;
 double distanceToBag = 5.0;
 int zoneThreshold = 3;
-double leftEdge = 0;
-double rightEdge = 0;
 
 //button for starting program
 const int buttonPin = BOOT_FLAG_PIN;
@@ -18,7 +16,7 @@ Motor left_motor;
 Motor right_motor;
 double diam = 2.75;
 double track = 5.875;
-int defaultSpeed = 150;
+int defaultSpeed = 200;
 double distanceCorrection = 0.95;
 double bagDistance;
 double zoneDistance;
@@ -29,14 +27,14 @@ const int reflectancePin2=36;
 int reflectance1;
 int reflectance2;
 int threshold = 1200;
-double kp = 0.05;
+double kp = 0.1; // 0.06
 
 //for servo arm
 Servo lifter;
 const int servoPin = 33;
 int deliverA = 0; // bag 1
-int deliverB = 80; // bag 2
-int deliverC = 135; // bag 3
+int deliverB = 75; // bag 2
+int deliverC = 130; // bag 3
 
 //state machine
 enum ROBOT_STATES{LINE_FOLLOW_OUT, APPROACH_BAG, STREET_1, STREET_2, STREET_3, STREET_4, STREET_5, LINE_FOLLOW_CRUTCH, end};
@@ -49,7 +47,7 @@ void hardTurn(double angle);
 void softTurn(double angle);
 double ultrasonicRead();
 void deliverBag(void);
-void turnToObject(float);
+void findFreeBag(double ultrasonic_distance);
 void straight(double distance);
 
 void setup() {
@@ -88,13 +86,13 @@ void softTurn(double angle){ //for navigation
     if (angle >= 0){
       left_motor.setSpeed(0);
       right_motor.setSpeed(0);
-      left_motor.moveFor(degreeMove, 100);
+      left_motor.moveFor(degreeMove, 150);
       left_motor.setSpeed(0);
       right_motor.setSpeed(0);
     }else{ 
       left_motor.setSpeed(0);
       right_motor.setSpeed(0);
-      right_motor.moveFor(-degreeMove, 100);
+      right_motor.moveFor(-degreeMove, 150);
       left_motor.setSpeed(0);
       right_motor.setSpeed(0);
     }
@@ -129,32 +127,32 @@ void deliverBag(void){ //for bag delivery
   }
 }
 
-void turnToObject(float distanceFromObject) { //Uses rangefinder to locate and pickup bag
+void turnToObject() { //Uses rangefinder to locate and pickup bag
+  lifter.write(0);
+  delay(200);
+  ultrasonic.getDistanceCM();
   delay(100);
-  leftEdge = 0;
-  rightEdge = 0;
-  lifter.write(1);
-    while (ultrasonic.getDistanceCM() > distanceFromObject) { // while object is out of range
-        left_motor.setEffort(0.2);
-        right_motor.setEffort(-0.2);
-    }
-    leftEdge = right_motor.getCurrentDegrees(), rightEdge = leftEdge; // default for rightEdge causes no turning
-    while (ultrasonic.getDistanceCM() < distanceFromObject) {} // wait for the object to get out of range
-    if (ultrasonic.getDistanceCM() > distanceFromObject) rightEdge = right_motor.getCurrentDegrees(); // when object is out of range
-      hardTurn((rightEdge - leftEdge) / 4); // turn ccw to center of object (average between the two edges)
-    while (ultrasonic.getDistanceCM() > distanceToBag) {
+  while (ultrasonic.getDistanceCM() > bagThreshold) { // while object is out of range
+      left_motor.setSpeed(80);
+      right_motor.setSpeed(-80);
+  }
+  double leftEdge = right_motor.getCurrentDegrees(), rightEdge = leftEdge; // default for rightEdge causes no turning
+  while (ultrasonic.getDistanceCM() < bagThreshold) {} // wait for the object to get out of range
+  rightEdge = right_motor.getCurrentDegrees(); // when object is out of range
+  hardTurn((rightEdge - leftEdge) / 3); // turn ccw to center of object (average between the two edges)
+  while (ultrasonic.getDistanceCM() > distanceToBag) {
     float error = ultrasonic.getDistanceCM();
-    left_motor.setEffort(error * kp / 1.9); // different value to fix motor
-    right_motor.setEffort(error * kp / 2);
-    }
-    left_motor.setEffort(0);
-    right_motor.setEffort(0);
-    straight(-2);
-    hardTurn(170);
-    straight(-3);
-    lifter.write(180);
-    delay(500);
-    straight(3);
+    left_motor.setEffort(error * kp / 4); //  /2
+    right_motor.setEffort(error * kp / 4); //  /2
+  }
+  lifter.write(0);
+  left_motor.setSpeed(0);
+  right_motor.setSpeed(0);
+  straight(-2);
+  hardTurn(180);
+  straight(-3.25);
+  lifter.write(180);
+  delay(500);
 }
 
 void dropOffBag(){ //Drops the bags off
@@ -165,10 +163,12 @@ void dropOffBag(){ //Drops the bags off
   } else if (bagState == 2){
     lifter.write(deliverB);
   } else if (bagState == 3){
+    lifter.write(180);
     lifter.write(deliverC);
   }
-  delay(500);
+  delay(1000);
 }
+
 
 void updateRobotState(void){
  
@@ -207,7 +207,9 @@ void updateRobotState(void){
       if ((reflectance1 > threshold) && (reflectance2 > threshold)){
          straight(-5);
          hardTurn(-30);
-         turnToObject(bagThreshold);
+         lifter.write(0);
+         turnToObject();
+         straight(3);
          robotState = STREET_1;
        }else{
          lineFollow(reflectance1, reflectance2);
@@ -255,10 +257,10 @@ void updateRobotState(void){
           hardTurn(90);
           straight(5);
           hardTurn(-30);
-          delay(100);
-          turnToObject(bagThreshold);
-          delay(100);
-          hardTurn(-45);
+          lifter.write(0);
+          delay(200);
+          turnToObject();
+          hardTurn(-35);
           robotState = STREET_2;
          } else {
           dropOffBag();
