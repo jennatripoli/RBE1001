@@ -26,20 +26,20 @@ const int reflectancePin1=39;
 const int reflectancePin2=36;
 int reflectance1;
 int reflectance2;
-int threshold = 1200;
-double kp = 0.1; // 0.06
+int threshold = 1000;
+double kp = 0.1; // 0.06 on Dilce's Robot
 
 //for servo arm
 Servo lifter;
 const int servoPin = 33;
-int deliverA = 0; // bag 1
-int deliverB = 75; // bag 2
-int deliverC = 130; // bag 3
+int deliverA = 0; // Bag 1
+int deliverB = 75; // Bag 2
+int deliverC = 130; // Bag 3
 
 //state machine
 enum ROBOT_STATES{LINE_FOLLOW_OUT, APPROACH_BAG, STREET_1, STREET_2, STREET_3, STREET_4, STREET_5, LINE_FOLLOW_CRUTCH, end};
 int robotState;
-int bagState = 0; // 0 = STREET_3, 1 = STREET_4, 2 = STREET_5
+int bagState = 0; //Start Times: 0 = Bag 1, 1 = Bag 2, 2 = Bag 3
 
 //functions
 void lineFollow(int reflectance1, int reflectance2);
@@ -139,17 +139,17 @@ void turnToObject() { //Uses rangefinder to locate and pickup bag
   double leftEdge = right_motor.getCurrentDegrees(), rightEdge = leftEdge; // default for rightEdge causes no turning
   while (ultrasonic.getDistanceCM() < bagThreshold) {} // wait for the object to get out of range
   rightEdge = right_motor.getCurrentDegrees(); // when object is out of range
-  hardTurn((rightEdge - leftEdge) / 3); // turn ccw to center of object (average between the two edges)
+  hardTurn((rightEdge - leftEdge) / 4); // turn ccw to center of object (average between the two edges)
   while (ultrasonic.getDistanceCM() > distanceToBag) {
     float error = ultrasonic.getDistanceCM();
-    left_motor.setEffort(error * kp / 4); //  /2
-    right_motor.setEffort(error * kp / 4); //  /2
+    left_motor.setEffort(error * kp / 4); //  /2 on Dilce's Robot
+    right_motor.setEffort(error * kp / 4); //  /2 on Dilce's Robot
   }
   lifter.write(0);
   left_motor.setSpeed(0);
   right_motor.setSpeed(0);
   straight(-2);
-  hardTurn(180);
+  hardTurn(170);
   straight(-3.25);
   lifter.write(180);
   delay(500);
