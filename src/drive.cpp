@@ -1,19 +1,25 @@
 #include <drive.h>
 
 /**
+ * Stop both drive motors.
+ **/
+void Drive::stop(void) {
+    leftMotor.setSpeed(0);
+    rightMotor.setSpeed(0);
+}
+
+/**
  * Turn in place.
  * @param angle  how far to turn, in degrees (positive = clockwise)
  **/
 void Drive::hardTurn(double angle) {
-  leftMotor.setSpeed(0);
-  rightMotor.setSpeed(0);
+  stop();
 
   double degreesToMove = (angle * track) / diam;
   leftMotor.startMoveFor(degreesToMove, 100);
   rightMotor.moveFor(-degreesToMove, 100);
 
-  leftMotor.setSpeed(0);
-  rightMotor.setSpeed(0);
+  stop();
 }
 
 /**
@@ -21,15 +27,13 @@ void Drive::hardTurn(double angle) {
  * @param angle  how far to turn, in degrees (positive = clockwise)
  **/
 void Drive::softTurn(double angle) {  
-  leftMotor.setSpeed(0);
-  rightMotor.setSpeed(0);
+  stop();
   
   double degreesToMove = (2 * angle * track) / diam;
   if (angle >= 0) leftMotor.moveFor(degreesToMove, 150);  // turn right
   else rightMotor.moveFor(-degreesToMove, 150);  // turn left
 
-  leftMotor.setSpeed(0);
-  rightMotor.setSpeed(0);
+  stop();
 }
 
 /**
@@ -40,14 +44,6 @@ void Drive::straight(double distance) {
   double degreesToMove = (360 * distance) / (diam * PI);
   leftMotor.startMoveFor(degreesToMove, defaultSpeed);
   rightMotor.moveFor(degreesToMove, defaultSpeed);
-}
-
-/**
- * Stop both drive motors.
- **/
-void Drive::stop(void) {
-    leftMotor.setSpeed(0);
-    rightMotor.setSpeed(0);
 }
 
 /**
