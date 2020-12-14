@@ -3,9 +3,9 @@
 
 // for rangefinder
 Rangefinder rangefinder;
-float distanceToBag = 5.0;  // how far away the robot should be from the bag when picking it up
+double distanceToBag = 5;  // how far away the robot should be from the bag when picking it up
 int bagThreshold = 30;  // how far away the robot can be to detect a bag
-int zoneThreshold = 3;
+int zoneThreshold = 3;  //
 
 // button for starting program
 const int buttonPin = BOOT_FLAG_PIN;
@@ -13,10 +13,10 @@ bool upDown = false;
 
 // for driving
 Motor leftMotor, rightMotor;
-float diam = 2.75;  // diameter of drive wheels, in inches
-float track = 5.875;
-float defaultSpeed = 200;  // default speed for driving, in degrees/sec
-float kP = 0.1;  // proportional constant for drive wheels (0.06 on Dilce's bot)
+double diam = 2.75;  // diameter of drive wheels, in inches
+double track = 5.875;  // 
+double defaultSpeed = 200;  // default speed for driving, in degrees/sec
+double kP = 0.1;  // proportional constant for drive wheels (0.06 on Dilce's bot)
 
 // for line following
 const int reflectancePin1 = 39, reflectancePin2 = 36;
@@ -35,13 +35,13 @@ int bagState = 0;  // 0 = Bag 1 (zone A), 1 = Bag 2 (zone B), 2 = Bag 3 (zone C)
 
 // functions
 void lineFollow(int reflectance1, int reflectance2);
-void hardTurn(float angle);
-void softTurn(float angle);
-void straight(float distance);
-double ultrasonicRead();  // TODO: where is this??
+void hardTurn(double angle);
+void softTurn(double angle);
+void straight(double distance);
 void pickUpBag(void);
 void dropOffBag(void);
 void updateRobotState(void);
+double ultrasonicRead();  // TODO: where is this??
 
 void setup() {
   Motor::allocateTimer(0);
@@ -61,9 +61,9 @@ void setup() {
  * @param reflectance1  line sensor value of pin 1
  * @param reflectance2  line sensor value of pin 2
  **/
-void lineFollow(int reflectance1 , int reflectance2) {
-  float error = reflectance1 - reflectance2;
-  float effort = kP * error;
+void lineFollow(int reflectance1, int reflectance2) {
+  double error = reflectance1 - reflectance2;
+  double effort = kP * error;
   rightMotor.setSpeed(defaultSpeed + effort);
   leftMotor.setSpeed(defaultSpeed - effort);
 }
@@ -72,11 +72,11 @@ void lineFollow(int reflectance1 , int reflectance2) {
  * Turn in place.
  * @param angle  how far to turn, in degrees (positive = clockwise)
  **/
-void hardTurn(float angle) {
+void hardTurn(double angle) {
   leftMotor.setSpeed(0);
   rightMotor.setSpeed(0);
 
-  float degreesToMove = (angle * track) / diam;
+  double degreesToMove = (angle * track) / diam;
   leftMotor.startMoveFor(degreesToMove, 100);
   rightMotor.moveFor(-degreesToMove, 100);
 
@@ -92,7 +92,7 @@ void softTurn(double angle) {
   leftMotor.setSpeed(0);
   rightMotor.setSpeed(0);
   
-  float degreesToMove = (2 * angle * track) / diam;
+  double degreesToMove = (2 * angle * track) / diam;
   if (angle >= 0) leftMotor.moveFor(degreesToMove, 150);  // turn right
   else rightMotor.moveFor(-degreesToMove, 150);  // turn left
 
@@ -105,7 +105,7 @@ void softTurn(double angle) {
  * @param distance  how far to drive, in inches (positive = forward)
  **/
 void straight(double distance) {
-  float degreesToMove = (360 * distance) / (diam * PI);
+  double degreesToMove = (360 * distance) / (diam * PI);
   leftMotor.startMoveFor(spin, defaultSpeed);
   rightMotor.moveFor(spin, defaultSpeed);
 }
@@ -114,7 +114,7 @@ void straight(double distance) {
  * Center robot on bag using rangefinder, approach bag, and pick up bag.
  **/
 void pickUpBag(void) {
-  float leftEdge, rightEdge, error;
+  double leftEdge, rightEdge, error;
   armServo.write(0);
   delay(200);
   rangefinder.getDistanceCM();
